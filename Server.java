@@ -14,17 +14,19 @@ public class Server {
     
     public Server(int port){
         this.port = port;
+        try {
+            sock = new ServerSocket(port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void serve(int clients){
-        try {
-            sock = new ServerSocket(port);
-
+        try{
             for(int i = 0; i < clients; ++i){
                 ClientHandler clientHandler = new ClientHandler(sock.accept());
                 clientHandler.start();
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,16 +47,56 @@ public class Server {
     private class ClientHandler extends Thread {
         private Socket socket;
         private LocalDateTime connectTime;
+        private ArrayList<Integer> factors = new ArrayList<>();
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
             this.connectTime = LocalDateTime.now();
             connectedTimes.add(connectTime); 
         }
+        
+        public void disconnect(){
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         @Override
         public void run() {
-            
+            try {
+                BufferedReader br = new BufferedReader( new InputStreamReader(socket.getInputStream()) );
+                PrintWriter pw = new PrintWriter(socket.getOutputStream());
+
+                String pass = br.readLine();
+                if(!pass.equals("12345")){
+                    socket.close();
+                    return;
+                }
+
+                int num = Integer.parseInt(br.readLine());
+                factors.add(1);
+                factors.add(num);
+
+                for(int i = 2; i <= (int) Math.sqrt(num); i++){
+                    if(num % i == 0){
+                        factors.add(i);
+                        if (num != (i * i)) {
+                            factors.add(num/i);
+                        }
+                    }
+                }
+
+                pw.println("The number " + num + " has " + factors.size() + " factors");
+                pw.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+
+            this.disconnect();
         }
 
     }
