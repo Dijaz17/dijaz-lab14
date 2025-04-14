@@ -71,6 +71,8 @@ public class Server {
 
                 String pass = br.readLine();
                 if(!pass.equals("12345")){
+                    pw.println("couldn't handshake");
+                    pw.flush();
                     socket.close();
                     return;
                 }
@@ -93,7 +95,15 @@ public class Server {
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (NumberFormatException e) {
-                e.printStackTrace();
+                try {
+                    PrintWriter pw = new PrintWriter(socket.getOutputStream());
+                    pw.println("There was an exception on the server");
+                    pw.flush();
+                } catch (IOException error) {
+                    e.printStackTrace();
+                    error.printStackTrace();
+                }
+                
             }
 
             this.disconnect();
